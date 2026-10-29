@@ -1,0 +1,47 @@
+name: et7sn
+description: Arabic/English fitness, diet and prayer-times app with an Olive Green theme.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Localization (Arabic & English)
+  intl: any   # version is pinned by flutter_localizations
+  shared_preferences: ^2.3.2
+
+  # Firebase
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+
+  # Location
+  geolocator: ^13.0.1
+
+  # Prayer times (calculated on-device, works offline)
+  adhan: ^2.0.0+1
+
+  # UI
+  google_fonts: ^6.2.1
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  ios: false
+  remove_alpha_ios: true

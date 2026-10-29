@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Set from a trusted environment only (see scripts/set_admin.js).
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // Profiles: owners read/write their own; admins can read all (and delete).
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow create, update: if isSignedIn() && request.auth.uid == uid;
+      allow delete: if isAdmin();
+    }
+
+    // Weekly leaderboard: everyone signed in can read; users write only their own entry.
+    match /leaderboards/{weekId}/entries/{uid} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.currentWeightKg is number
+        && request.resource.data.currentWeightKg >= 25
+        && request.resource.data.currentWeightKg <= 300;
+      allow delete: if isAdmin();
+    }
+  }
+}
