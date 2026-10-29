@@ -8,9 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: et7sn_complete_with_icon
 
     steps:
     - uses: actions/checkout@v4
@@ -72,4 +69,146 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: app-release
-        path: et7sn_complete_with_icon/build/app/outputs/flutter-apk/app-release.apk
+        path: build/app/outputs/flutter-apk/app-release.apkname: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+        cache: true
+
+    - name: Generate Android project
+      run: |
+        flutter create --platforms=android --org com.et7sn.app --project-name et7sn .
+
+    - name: Patch Android manifest and minSdk
+      run: |
+        MANIFEST=android/app/src/main/AndroidManifest.xml
+
+        # INTERNET is only in the debug manifest by default -> release builds
+        # would have no network (Firebase would fail). Location is needed by geolocator.
+        sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <application#' "$MANIFEST"
+        sed -i 's#android:label="[^"]*"#android:label="Olive Fit"#' "$MANIFEST"
+
+        # Firebase Auth / Firestore need minSdk 23+
+        for f in android/app/build.gradle.kts android/app/build.gradle; do
+          [ -f "$f" ] && sed -i 's/minSdk = flutter.minSdkVersion/minSdk = maxOf(flutter.minSdkVersion, 23)/; s/minSdkVersion flutter.minSdkVersion/minSdkVersion Math.max(flutter.minSdkVersion, 23)/' "$f"
+        done
+        grep -n "uses-permission\|android:label" "$MANIFEST"
+        grep -n "minSdk" android/app/build.gradle* || true
+
+    - name: Install dependencies and generate icons
+      run: |
+        flutter pub get
+        dart run flutter_launcher_icons
+
+    - name: Build APK
+      env:
+        FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+        FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+        FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+      run: |
+        ARGS=""
+        [ -n "$FIREBASE_API_KEY" ] && ARGS="$ARGS --dart-define=FIREBASE_API_KEY=$FIREBASE_API_KEY"
+        [ -n "$FIREBASE_APP_ID" ] && ARGS="$ARGS --dart-define=FIREBASE_APP_ID=$FIREBASE_APP_ID"
+        [ -n "$FIREBASE_MESSAGING_SENDER_ID" ] && ARGS="$ARGS --dart-define=FIREBASE_MESSAGING_SENDER_ID=$FIREBASE_MESSAGING_SENDER_ID"
+        [ -n "$FIREBASE_PROJECT_ID" ] && ARGS="$ARGS --dart-define=FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID"
+        [ -n "$FIREBASE_STORAGE_BUCKET" ] && ARGS="$ARGS --dart-define=FIREBASE_STORAGE_BUCKET=$FIREBASE_STORAGE_BUCKET"
+        flutter build apk --release $ARGS
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release
+        path: build/app/outputs/flutter-apk/app-release.apkname: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+        cache: true
+
+    - name: Generate Android project
+      run: |
+        flutter create --platforms=android --org com.et7sn.app --project-name et7sn .
+
+    - name: Patch Android manifest and minSdk
+      run: |
+        MANIFEST=android/app/src/main/AndroidManifest.xml
+
+        # INTERNET is only in the debug manifest by default -> release builds
+        # would have no network (Firebase would fail). Location is needed by geolocator.
+        sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <application#' "$MANIFEST"
+        sed -i 's#android:label="[^"]*"#android:label="Olive Fit"#' "$MANIFEST"
+
+        # Firebase Auth / Firestore need minSdk 23+
+        for f in android/app/build.gradle.kts android/app/build.gradle; do
+          [ -f "$f" ] && sed -i 's/minSdk = flutter.minSdkVersion/minSdk = maxOf(flutter.minSdkVersion, 23)/; s/minSdkVersion flutter.minSdkVersion/minSdkVersion Math.max(flutter.minSdkVersion, 23)/' "$f"
+        done
+        grep -n "uses-permission\|android:label" "$MANIFEST"
+        grep -n "minSdk" android/app/build.gradle* || true
+
+    - name: Install dependencies and generate icons
+      run: |
+        flutter pub get
+        dart run flutter_launcher_icons
+
+    - name: Build APK
+      env:
+        FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+        FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+        FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+      run: |
+        ARGS=""
+        [ -n "$FIREBASE_API_KEY" ] && ARGS="$ARGS --dart-define=FIREBASE_API_KEY=$FIREBASE_API_KEY"
+        [ -n "$FIREBASE_APP_ID" ] && ARGS="$ARGS --dart-define=FIREBASE_APP_ID=$FIREBASE_APP_ID"
+        [ -n "$FIREBASE_MESSAGING_SENDER_ID" ] && ARGS="$ARGS --dart-define=FIREBASE_MESSAGING_SENDER_ID=$FIREBASE_MESSAGING_SENDER_ID"
+        [ -n "$FIREBASE_PROJECT_ID" ] && ARGS="$ARGS --dart-define=FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID"
+        [ -n "$FIREBASE_STORAGE_BUCKET" ] && ARGS="$ARGS --dart-define=FIREBASE_STORAGE_BUCKET=$FIREBASE_STORAGE_BUCKET"
+        flutter build apk --release $ARGS
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release
+        path: build/app/outputs/flutter-apk/app-release.apk
