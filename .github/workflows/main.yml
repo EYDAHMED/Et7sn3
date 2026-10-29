@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: et7sn_fixed/et7sn_complete_with_icon
 
     steps:
     - uses: actions/checkout@v4
@@ -32,12 +35,9 @@ jobs:
       run: |
         MANIFEST=android/app/src/main/AndroidManifest.xml
 
-        # INTERNET is only in the debug manifest by default -> release builds
-        # would have no network (Firebase would fail). Location is needed by geolocator.
         sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <application#' "$MANIFEST"
         sed -i 's#android:label="[^"]*"#android:label="Olive Fit"#' "$MANIFEST"
 
-        # Firebase Auth / Firestore need minSdk 23+
         for f in android/app/build.gradle.kts android/app/build.gradle; do
           [ -f "$f" ] && sed -i 's/minSdk = flutter.minSdkVersion/minSdk = maxOf(flutter.minSdkVersion, 23)/; s/minSdkVersion flutter.minSdkVersion/minSdkVersion Math.max(flutter.minSdkVersion, 23)/' "$f"
         done
@@ -69,4 +69,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: app-release
-        path: build/app/outputs/flutter-apk/app-release.apk
+        path: et7sn_fixed/et7sn_complete_with_icon/build/app/outputs/flutter-apk/app-release.apk
