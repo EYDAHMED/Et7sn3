@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1086775785895",
+    "project_id": "et7sn-dc1c8",
+    "storage_bucket": "et7sn-dc1c8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1086775785895:android:8f0e3118f14980b3661e82",
+        "android_client_info": {
+          "package_name": "com.et7sn.app.et7sn"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQxtlFvgK4OdU9ZxtFMMy3qO6P7iE7QEk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
