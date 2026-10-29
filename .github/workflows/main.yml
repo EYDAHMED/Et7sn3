@@ -31,6 +31,19 @@ jobs:
       run: |
         flutter create --platforms=android --org com.et7sn.app --project-name et7sn .
 
+    - name: Configure Firebase Google Services
+      run: |
+        # البحث عن ملف google-services.json ونسخه إلى مجلد android/app تلقائياً
+        if [ -f "google-services.json" ]; then
+          cp google-services.json android/app/google-services.json
+          echo "google-services.json copied successfully."
+        elif [ -f "../../google-services.json" ]; then
+          cp "../../google-services.json" android/app/google-services.json
+          echo "google-services.json copied from root repository."
+        else
+          echo "WARNING: google-services.json file not found in directory!"
+        fi
+
     - name: Patch Android manifest and minSdk
       run: |
         MANIFEST=android/app/src/main/AndroidManifest.xml
